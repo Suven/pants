@@ -1,9 +1,12 @@
-header role="primary" class=(current_site.flair_uid.present? ? 'with-flair' : nil)
+header role="primary" class=(current_site.flair_uid.present? ? 'with-flair' : nil) data-0="top: 0px; opacity: 1;" data-160="top: -160px; opacity: 1;" data-250="top: -160px; opacity: 0.975;"
   .header-container
     - if current_site.image_uid.present?
-      = link_to image_tag(current_site.local_thumbnail.url), :root, class: 'header-site-image'
+      .ava data-60="transform: scale(1)" data-160="transform: scale(0.48);"
+        = link_to image_tag(current_site.local_thumbnail.url), :root, class: 'header-site-image'
     .header-site-info
       .header-site-name
         = link_to current_site.display_name, :root
       .header-site-domain
         = link_to current_site.domain, :root
+
+.headspacer

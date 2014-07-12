@@ -30,11 +30,14 @@ html
 
   body
     = render 'header'
-    = render 'navigation'
 
-    section#main
-      = render 'flashes'
-      = yield
+    #skrollr-body
 
-    = render 'footer'
+      = render 'navigation'
+
+      section#main
+        = render 'flashes'
+        = yield
+
+      = render 'footer'
 

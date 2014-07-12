@@ -2,13 +2,21 @@
 
 header[role="primary"] {
   height: 85px;
-  margin-bottom: 30px;
   width: 100%;
   overflow: hidden;
+  box-shadow: 0px 0px 5px black;
 
   @include on-mobile {
-    margin-bottom: 0;
+    top: -160px !important;
   }
+}
+
+.headspacer {
+    height: 280px;
+
+    @include on-mobile {
+      height: 90px;
+    }
 }
 
 .header-container {
@@ -25,18 +33,37 @@ header[role="primary"] {
   }
 }
 
-.header-site-image {
-  img {
-    @extend %slanted-animated;
-    @include border-radius(20% 0);
+.ava {
     position: absolute;
     right: 5px;
     bottom: 5px;
-    width: 75px;
-    height: 75px;
-    border: 1px solid rgba(#000, 0.3);
-    z-index: 1;
-  }
+    width: 170px;
+    height: 170px;
+    -moz-transform-origin: 100% 100%;
+    -webkit-transform-origin: 100% 100%;
+    -o-transform-origin: 100% 100%;
+    -ms-transform-origin: 100% 100%;
+    transform-origin: 100% 100%;
+
+    @include on-mobile {
+        -webkit-transform: scale(0.48) !important;
+        -moz-transform: scale(0.48) !important;
+        -ms-transform: scale(0.48) !important;
+        -o-transform: scale(0.48) !important;
+        transform: scale(0.48) !important;
+    }
+
+    .header-site-image {
+      img {
+        @extend %slanted-animated;
+        @include border-radius(20% 0);
+        height: 100%;
+        width: auto;
+        border: 1px solid rgba(255,255,255, 0.1);
+        z-index: 1;
+        position: relative;
+      }
+    }
 }
 
 .header-site-info {
@@ -49,48 +76,22 @@ header[role="primary"] {
 // overrides for headers with flair
 header[role="primary"].with-flair {
   height: 250px;
+  position: fixed;
+  z-index: 100;
 
-  @include background(
-    linear-gradient(top, rgba(#fff, 0.5), rgba(#fff, 0.8)),
-    url('/user-flair.jpg'),
-    $color-theme);
+    @include background(
+      linear-gradient(top, rgba(#000, 0.75), rgba(#000, 0.75)),
+      url('/user-flair.jpg'),
+      $color-theme);
 
-  background-size: cover;
+    background-size: cover;
 
   .header-container {
-    @include box-shadow(rgba(#000, 0.5) 0 0 10px);
+    @include box-shadow(0 0 10px rgba(1, 1, 1, 0.83), 0 0 1px rgba(255, 255, 255, 0.34) inset);
     @include background(url('/user-flair.jpg'));
     background-size: cover;
   }
 
-  .header-site-image img {
-    right: 10px;
-    bottom: 10px;
-    width: 170px;
-    height: 170px;
-    @include box-shadow(rgba(#000, 0.5) 0 0 15px 1px);
-  }
-
-  // apply a gradient to the flair image
-  .header-site-info {
-    $from: rgba(#000, 0);
-    $to: rgba(#000, 0.4);
-    @include background(linear-gradient(bottom, $to, $from 100px, $from));
-  }
-
-  @include on-mobile {
-    // increase image size
-    .header-site-image {
-      img {
-        width: 120px;
-        height: 120px;
-        border-width: 4px;
-      }
-    }
-
-    // reduce height
-    height: 140px;
-  }
 }
 
 .header-site-name, .header-site-domain {
@@ -108,10 +109,6 @@ header[role="primary"].with-flair {
   font-size: 40px;
   font-weight: bold;
   text-shadow: rgba(#000, 0.25) 0px 3px 3px;
-
-  @include on-mobile {
-    font-size: 30px;
-  }
 }
 
 .header-site-domain {
