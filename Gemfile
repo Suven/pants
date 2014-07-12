@@ -1,5 +1,8 @@
 source 'https://rubygems.org'
 
+gem 'nokogiri'
+gem 'rails_12factor'
+
 # Core
 gem 'rails', '4.1.4'
 gem 'pg'
@@ -85,3 +88,5 @@ group :tools do
   gem 'capistrano-chruby'
   gem 'capistrano-bundler'
 end
+
+ruby "2.1.2"
