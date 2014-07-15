@@ -1,9 +1,9 @@
 class PostsController < ApplicationController
   # Add a couple of additional response formats.
   #
-  respond_to :json, only: [:show, :index]
+  respond_to :json
   respond_to :atom, only: [:index, :tagged]
-  respond_to :js, only: [:index]
+  respond_to :js, only: [:index, :tagged]
 
   load_and_authorize_resource :post,
     find_by: :slug,
@@ -53,12 +53,26 @@ class PostsController < ApplicationController
 
   def show
     with_canonical_url(post_url(@post, format: params[:format])) do
-      @page_title = @post.to_title
+      @page_title = @post.title
 
       respond_with @post do |format|
         format.md { render text: @post.body }
       end
     end
+  end
+
+  def remote
+    @url = params[:url]
+
+    # First, try to load the post from the database
+    @post = Post[@url]
+
+    # If we haven't seen this post yet, or its last update was more than 1h ago, fetch it
+    if @post.nil? || @post.updated_at < 1.hour.ago
+      @post = PostFetcher.new(params[:url]).fetch!
+    end
+
+    render 'show'
   end
 
   def new

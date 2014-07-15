@@ -11,18 +11,29 @@ class Post < ActiveRecord::Base
   # Validations
   #
   before_validation do
-    if body_changed?
-      # Resolve hashtag links
-      body_with_hashtags = body.gsub(TagExtractor::REGEX) do
-        "<a href=\"#{user.try(:url)}/tag/#{$1.downcase}\" class=\"hashtag\">##{$1}</a>"
-      end
+    if user.try(:hosted?)
+      if body_changed?
+        Rails.logger.info "Rendering markdown for #{self}"
+        # Resolve hashtag links
+        body_with_hashtags = body.gsub(TagExtractor::REGEX) do
+          tag_url = URI.join(user.url, "/tag/#{$1.downcase}")
+          "<a href=\"#{tag_url}\" class=\"hashtag p-category\">##{$1}</a>"
+        end
 
-      # Render body to HTML
-      self.body_html = Formatter.new(body_with_hashtags).complete.to_s
+        # Render body to HTML
+        self.body_html = Formatter.new(body_with_hashtags).complete.to_s
+      end
+    else
+      # User is a remote user -- let's sanitize the HTML
+      Rails.logger.info "Sanitizing HTML for #{self}"
+      self.body_html = Formatter.new(body_html).sanitize.to_s
     end
 
     # Extract and save tags
     self.tags = TagExtractor.extract_tags(HTML::FullSanitizer.new.sanitize(body_html)).map(&:downcase)
+
+    # Extract and save title
+    self.title = to_title
 
     # Generate slug
     self.slug ||= generate_slug
@@ -30,24 +41,14 @@ class Post < ActiveRecord::Base
     # Set GUID
     self.guid = "#{domain}/#{slug}"
 
-    # Publish post right away... for now
-    self.published_at ||= Time.now     # for the SHA
+    # Publish post right away
+    self.published_at ||= Time.now
 
     # Default editing timestamp to publishing timestamp
     self.edited_at ||= published_at
 
     # Default URL to http://<guid>
     self.url ||= "http://#{guid}"
-
-    # Update SHAs
-    self.sha = calculate_sha
-  end
-
-  before_update do
-    # Remember previous SHA
-    if sha_changed? && sha_was.present? && !sha_was.in?(previous_shas)
-      self.previous_shas += [sha_was]
-    end
   end
 
   validate(on: :update) do
@@ -61,7 +62,7 @@ class Post < ActiveRecord::Base
   validates :body,
     presence: true
 
-  validates :guid, :sha, :url,
+  validates :guid, :url,
     presence: true,
     uniqueness: true
 
@@ -75,13 +76,6 @@ class Post < ActiveRecord::Base
 
   has_many :timeline_entries,
     dependent: :destroy
-
-  has_many :pings,
-    dependent: :nullify
-
-  def calculate_sha
-    Digest::SHA1.hexdigest("pants:#{guid}:#{referenced_guid}:#{body}")
-  end
 
   def generate_slug
     chars = ('a'..'z').to_a
@@ -99,6 +93,10 @@ class Post < ActiveRecord::Base
   end
 
   concerning :Representation do
+    def to_s
+      "[Post #{guid}]"
+    end
+
     def to_param
       slug
     end
@@ -122,6 +120,10 @@ class Post < ActiveRecord::Base
           v << " " << sentence
         end
       end.strip.html_safe
+    end
+
+    def title
+      read_attribute(:title) || to_title
     end
 
     def to_title
@@ -156,6 +158,13 @@ class Post < ActiveRecord::Base
     end
   end
 
+  concerning :Pings do
+    included do
+      has_many :pings,
+        dependent: :nullify
+    end
+  end
+
   class << self
     # The following attributes will be copied from post JSON responses
     # into local Post instances.
@@ -166,12 +175,11 @@ class Post < ActiveRecord::Base
       published_at
       edited_at
       referenced_guid
+      title
       body
       body_html
       domain
       slug
-      sha
-      previous_shas
       tags
     }
 
